@@ -21,6 +21,19 @@ export const hostEnvVarSchemas = {
         (val) => path.isAbsolute(val),
         'DATA_PATH must be an absolute path'
     ),
+    ADMINS_FILE_PATH: z.string().min(1).refine(
+        (val) => path.isAbsolute(val),
+        'ADMINS_FILE_PATH must be an absolute path'
+    ),
+    PLAYERS_DB_PATH: z.string().min(1).refine(
+        (val) => path.isAbsolute(val),
+        'PLAYERS_DB_PATH must be an absolute path'
+    ),
+    LUACOM_TOKEN: z.string().regex(
+        /^[A-Za-z0-9_-]{16,64}$/,
+        'Token must be alphanumeric, underscores or dashes only, and between 16 and 64 characters long.'
+    ),
+    PROFILE: z.string().min(1).regex(/^[a-zA-Z0-9._-]+$/, 'Profile name must be alphanumeric, underscores or dashes only.'),
     GAME_NAME: z.enum(
         ['fivem', 'redm'],
         { message: 'GAME_NAME must be either "gta5", "rdr3", or undefined' }
@@ -39,6 +52,7 @@ export const hostEnvVarSchemas = {
         'FXS_PORT cannot be between 40120 and 40150'
     ),
     INTERFACE: z.string().ip({ version: "v4" }),
+    NET_INTERFACE: z.string().ip({ version: "v4" }),
 
     //Provider
     PROVIDER_NAME: z.string()

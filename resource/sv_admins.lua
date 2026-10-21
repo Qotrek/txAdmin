@@ -1,12 +1,8 @@
 -- Prevent running in monitor mode
 if not TX_SERVER_MODE then return end
 
-if TX_LUACOMHOST == "invalid" or TX_LUACOMTOKEN == "invalid" then
+if TX_LUACOMHOST == "invalid" or not TX_LUACOMTOKEN or TX_LUACOMTOKEN == "invalid" then
     txPrint('^1API Host or Pipe Token ConVars not found. Do not start this resource if not using txAdmin.')
-    return
-end
-if TX_LUACOMTOKEN == "removed" then
-    txPrint('^1Please do not restart the monitor resource.')
     return
 end
 

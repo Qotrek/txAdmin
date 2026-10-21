@@ -224,8 +224,8 @@ if (nonASCIIRegex.test(fxsPath) || nonASCIIRegex.test(dataPath)) {
     ]);
 }
 
-//Profile - not available as env var
-let profileVar = nativeVars.txAdminProfile;
+//Profile - env var or convar
+let profileVar = hostVars.PROFILE ?? nativeVars.txAdminProfile;
 if (profileVar) {
     profileVar = profileVar.replace(/[^a-z0-9._-]/gi, '');
     if (profileVar.endsWith('.base')) {
@@ -287,7 +287,7 @@ const fxsPort = handleMultiVar(
 const netInterface = handleMultiVar(
     'INTERFACE',
     hostEnvVarSchemas.INTERFACE,
-    hostVars.INTERFACE,
+    hostVars.INTERFACE ?? hostVars.NET_INTERFACE,
     zapVars?.forceInterface,
     nativeVars.txAdminInterface,
 );
@@ -301,6 +301,9 @@ if (netInterface) {
  */
 const forceGameName = hostVars.GAME_NAME;
 const hostApiToken = hostVars.API_TOKEN;
+const adminsFilePath = hostVars.ADMINS_FILE_PATH ? cleanPath(hostVars.ADMINS_FILE_PATH) : undefined;
+const playersDbPath = hostVars.PLAYERS_DB_PATH ? cleanPath(hostVars.PLAYERS_DB_PATH) : undefined;
+const luaComToken = hostVars.LUACOM_TOKEN;
 
 const forceMaxClients = handleMultiVar(
     'MAX_SLOTS',
@@ -544,6 +547,9 @@ export const txHostConfig = Object.freeze({
     dataPath,
     dataSubPath: (...parts: string[]) => path.join(dataPath, ...parts),
     hasCustomDataPath,
+    adminsFilePath,
+    playersDbPath,
+    luaComToken,
     forceGameName,
     forceMaxClients,
     forceQuietMode,

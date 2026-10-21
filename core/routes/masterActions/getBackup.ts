@@ -3,7 +3,7 @@ import fsp from 'node:fs/promises';
 import consoleFactory from '@lib/console';
 import { AuthedCtx } from '@modules/WebServer/ctxTypes';
 import { getTimeFilename } from '@lib/misc';
-import { txEnv } from '@core/globalData';
+import { txEnv, txHostConfig } from '@core/globalData';
 const console = consoleFactory(modulename);
 
 
@@ -19,7 +19,7 @@ export default async function MasterActionsGet(ctx: AuthedCtx) {
         return ctx.utils.renderMessage('This functionality cannot be used by the in-game menu, please use the web version of txAdmin.');
     }
 
-    const dbPath = `${txEnv.profilePath}/data/playersDB.json`;
+    const dbPath = txHostConfig.playersDbPath ?? `${txEnv.profilePath}/data/playersDB.json`;
     let readFile;
     try {
         readFile = await fsp.readFile(dbPath);

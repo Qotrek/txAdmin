@@ -10,7 +10,7 @@ Those configurations are usually required for Game Server Providers (GSPs) and a
 
 > [!IMPORTANT]  
 > All ConVars but `serverProfile` became `TXHOST_*` env vars, and you should avoid using it as the concept of txAdmin profiles will likely be deprecated soon.  
-> If setting multiple servers, **we strongly encourage you to set up separate txDatas for your servers.** As otherwise the `admins.json` file will conflict.
+> You can now safely share `admins.json` and `playersDB.json` across multiple servers by setting `TXHOST_ADMINS_FILE_PATH` and `TXHOST_PLAYERS_DB_PATH`.
 
 > [!CAUTION]
 > Although the configuration below is useful for Game Server Providers (GSPs), **this is in no way, shape, or form an endorsement or permission for anyone to become an unauthorized GSP**.  
@@ -45,6 +45,15 @@ The specific way to set up those variables vary from system to system, and there
         - **Linux:** `<fxserver_root>/../../../txData` — sits in the folder that contains your `run.sh`.
     - The path to the txData folder, which contains the txAdmin logs, configs, and data. This is also the default place suggested for deploying new servers (as a subfolder). It is usually set to `/home/container` when running on Pterodactyl.
     - <mark>NOTE:</mark> This variable takes priority over the deprecated `txDataPath` ConVar.
+- **TXHOST_ADMINS_FILE_PATH**
+    - **Default value:** `<txData>/admins.json`.
+    - Absolute path to a shared or custom `admins.json` file. Allows multiple txAdmin instances to share the exact same admin accounts and permissions with real-time automatic synchronization and live file-watching.
+- **TXHOST_PLAYERS_DB_PATH**
+    - **Default value:** `<txData>/<profile>/data/playersDB.json`.
+    - Absolute path to a shared or custom `playersDB.json` file (playersData). Allows multiple servers to share player bans, warnings, and whitelists with automated cross-process synchronization and conflict-free merging.
+- **TXHOST_LUACOM_TOKEN**
+    - **Default value:** _undefined_ (random nanoid per boot).
+    - A fixed token string (16-64 characters) for communication between FXServer and txAdmin. Setting this allows secondary FXServer instances to connect their `monitor` resource directly to this txAdmin using a fixed token without it resetting on restarts.
 - **TXHOST_GAME_NAME**
     - **Default value:** _undefined_.
     - **Options:** `['fivem','redm']`.

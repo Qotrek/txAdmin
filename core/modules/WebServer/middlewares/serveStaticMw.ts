@@ -100,6 +100,13 @@ const checkFileWhitelist = (rootPath: string, url: string) => {
 
 //Scans a folder and returns all files processed with size and count limits
 export const scanStaticFolder = async ({ rootPath, state, limits }: ScanFolderOpts) => {
+    try {
+        await fsp.access(rootPath);
+    } catch {
+        console.verbose.warn(`Static folder '${rootPath}' not found, skipping.`);
+        return { addedFiles: 0, addedBytes: 0 };
+    }
+
     //100ms precision for elapsedMs
     let timerId
     if (limits.MAX_TIME) {

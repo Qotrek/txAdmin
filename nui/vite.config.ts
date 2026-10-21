@@ -9,10 +9,6 @@ process.loadEnvFile('../.env');
 
 //Check if TXDEV_FXSERVER_PATH is set
 const txDevEnv = parseTxDevEnv();
-if (!txDevEnv.FXSERVER_PATH) {
-    console.error('Missing TXDEV_FXSERVER_PATH env variable.');
-    process.exit(1);
-}
 
 const baseConfig = {
     build: {

@@ -58,7 +58,7 @@ export default class WebServer {
             .digest('hex')
             .padStart(12, '0');
         this.sessionCookieName = `${consts.cookies.session}:${pathHash}`;
-        this.luaComToken = nanoid();
+        this.luaComToken = txHostConfig.luaComToken ?? nanoid();
 
 
         // ===================
@@ -265,6 +265,11 @@ export default class WebServer {
      * Resetting lua comms token - called by fxRunner on spawnServer()
      */
     resetToken() {
+        if (txHostConfig.luaComToken) {
+            this.luaComToken = txHostConfig.luaComToken;
+            console.verbose.debug('Using configured luaComToken.');
+            return;
+        }
         this.luaComToken = nanoid();
         console.verbose.debug('Resetting luaComToken.');
     }

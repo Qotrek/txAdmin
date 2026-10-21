@@ -28,6 +28,12 @@ const MIN_KILL_DELAY = 250;
  */
 export default class FxRunner {
     static readonly configKeysWatched = [...mutableConvarConfigDependencies];
+    public static broadcastEventQueue: { id: number; name: string; data: any; ts: number }[] = [];
+    public static nextBroadcastEventId: number = 1;
+
+    public static getBroadcastEvents(sinceId = 0) {
+        return FxRunner.broadcastEventQueue.filter(e => e.id > sinceId);
+    }
 
     public readonly history: ChildProcessStateInfo[] = [];
     private proc: ProcessManager | null = null;
@@ -394,6 +400,22 @@ export default class FxRunner {
     public sendEvent(eventType: string, data = {}) {
         if (typeof eventType !== 'string' || !eventType) throw new Error('invalid eventType');
         try {
+            // Queue for multi-server intercom sync
+            const evId = FxRunner.nextBroadcastEventId++;
+            FxRunner.broadcastEventQueue.push({
+                id: evId,
+                name: eventType,
+                data,
+                ts: Date.now(),
+            });
+            if (FxRunner.broadcastEventQueue.length > 100) {
+                const fiveMinAgo = Date.now() - 300_000;
+                FxRunner.broadcastEventQueue = FxRunner.broadcastEventQueue.filter(e => e.ts > fiveMinAgo).slice(-50);
+            }
+
+            if (!this.proc?.isAlive) {
+                return true; // Queued for connected servers via intercom
+            }
             return this.sendCommand('txaEvent', [eventType, data], SYM_SYSTEM_AUTHOR);
         } catch (error) {
             console.verbose.error(`Error writing firing server event ${eventType}`);

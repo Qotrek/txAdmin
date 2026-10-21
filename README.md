@@ -16,6 +16,21 @@
     </p>
 </p>
 
+## 🚀 Fork Features: Multi-Server & Shared Data
+
+This fork enhances **txAdmin** with seamless multi-server support, allowing multiple independent FXServer / FiveM game servers (e.g. `Main RP` and `CarDev / Testing`) to run concurrently while sharing administration, player database, bans, and whitelist without data collisions.
+
+### 🌟 What's New in This Fork:
+- **Shared Player Database (`TXHOST_PLAYERS_DB_PATH`)**: Multiple txAdmin instances can now target a single shared `playersDB.json`. Any bans, warnings, whitelist approvals, or player notes executed on one server immediately propagate to all other instances via live filesystem watching and non-destructive data merging (`mergeDatabases`).
+- **Shared Admin Store (`TXHOST_ADMINS_FILE_PATH`)**: Point multiple servers to a single shared `admins.json`. Modifying admin permissions or accounts in any panel updates all running instances on the fly without wiping external edits.
+- **Fixed Intercom LuaCom Token (`TXHOST_LUACOM_TOKEN`)**: Support for fixed intercom tokens across server restarts.
+- **Custom Profile Management (`TXHOST_PROFILE`)**: Run distinct server configurations, ports, and logs while pointing to unified shared databases.
+- **Static Assets Fault-Tolerance**: Prevents fatal `ENOENT` webserver crashes when static asset directories are customized.
+
+📖 **Read the full documentation:**
+- **[Multi-Server Architecture & Setup Guide](docs/multi-server.md)**
+- **[Environment Variables Configuration](docs/env-config.md)**
+
 ## Main Features
 - Recipe-based Server Deployer: create a server in under 60 seconds! ([docs/recipe.md](docs/recipe.md))
 - Start/Stop/Restart your server instance or resources

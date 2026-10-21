@@ -38,7 +38,7 @@ const migrateProviderIdentifiers = (providerName, providerData) => {
  */
 export default class AdminStore {
     constructor() {
-        this.adminsFile = txHostConfig.dataSubPath('admins.json');
+        this.adminsFile = txHostConfig.adminsFilePath ?? txHostConfig.dataSubPath('admins.json');
         this.adminsFileHash = null;
         this.admins = null;
         this.refreshRoutine = null;
@@ -86,7 +86,7 @@ export default class AdminStore {
 
 
         //Load providers
-        //FIXME: pode virar um top-level singleton , não precisa estar na classe
+        //FIXME: pode virar um top-level singleton , nĂŁo precisa estar na classe
         try {
             this.providers = {
                 discord: false,
@@ -139,6 +139,19 @@ export default class AdminStore {
         this.refreshRoutine = setInterval(() => {
             this.checkAdminsFile();
         }, this.hardConfigs.refreshInterval);
+
+        // Instant file watcher for cross-server syncing
+        let watchDebounce = null;
+        try {
+            fs.watch(this.adminsFile, () => {
+                if (watchDebounce) clearTimeout(watchDebounce);
+                watchDebounce = setTimeout(() => {
+                    this.checkAdminsFile().catch(() => {});
+                }, 500);
+            });
+        } catch (watchErr) {
+            console.verbose.warn(`Could not set up fs.watch on admins file: ${watchErr.message}`);
+        }
     }
 
 
@@ -324,21 +337,20 @@ export default class AdminStore {
      * Writes to storage the admins file
      */
     async checkAdminsFile() {
-        const restore = async () => {
-            try {
-                await this.writeAdminsFile();
-                console.ok('Restored admins.json file.');
-            } catch (error) {
-                console.error(`Failed to restore admins.json file: ${error.message}`);
-                console.verbose.dir(error);
-            }
-        };
         try {
             const jsonData = await fsp.readFile(this.adminsFile, 'utf8');
             const inboundHash = createHash('sha1').update(jsonData).digest('hex');
             if (this.adminsFileHash !== inboundHash) {
-                console.warn('The admins.json file was modified or deleted by an external source, txAdmin will try to restore it.');
-                restore();
+                console.info('The admins.json file was modified externally, txAdmin will reload it.');
+                const prevAdmins = this.admins;
+                try {
+                    await this.loadAdminsFile();
+                    this.refreshOnlineAdmins().catch(() => {});
+                    console.ok('Reloaded admins.json file.');
+                } catch (loadErr) {
+                    console.error(`Failed to reload admins.json file: ${loadErr.message}`);
+                    this.admins = prevAdmins;
+                }
             }
         } catch (error) {
             console.error(`Failed to check admins file integrity: ${error.message}`);

@@ -3,6 +3,7 @@ import { cloneDeep }  from 'lodash-es';
 import { txEnv } from '@core/globalData';
 import consoleFactory from '@lib/console';
 import { InitializedCtx } from '@modules/WebServer/ctxTypes';
+import FxRunner from '@modules/FXRunner';
 const console = consoleFactory(modulename);
 
 
@@ -21,13 +22,26 @@ export default async function Intercom(ctx: InitializedCtx) {
 
     //Delegate to the specific scope functions
     if (scope == 'monitor') {
+        const isChildServer = postData.isChildServer !== false && (!postData.serverId || postData.serverId === 'primary');
+        if (isChildServer) {
+            try {
+                txCore.fxMonitor.handleHeartBeat('http');
+            } catch (error) {}
+        }
+
+        const lastEventId = typeof postData.lastEventId === 'number' ? postData.lastEventId : 0;
+        const events = FxRunner.getBroadcastEvents(lastEventId);
+
         try {
-            txCore.fxMonitor.handleHeartBeat('http');
-            return ctx.send(txCore.metrics.txRuntime.currHbData);
+            return ctx.send({
+                ...txCore.metrics.txRuntime.currHbData,
+                events,
+            });
         } catch (error) {
             return ctx.send({
                 txAdminVersion: txEnv.txaVersion,
                 success: false,
+                events,
             });
         }
     } else if (scope == 'resources') {

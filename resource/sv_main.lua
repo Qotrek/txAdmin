@@ -14,9 +14,9 @@ function replaceSemicolon(x)
     return new
 end
 
-if GetCurrentResourceName() ~= "monitor" then
-    logError('This resource should not be installed separately, it already comes with fxserver.')
-    return
+local currentResName = GetCurrentResourceName()
+if currentResName ~= "monitor" then
+    debugPrint('txAdmin resource running under custom name: ' .. currentResName)
 end
 
 
@@ -25,40 +25,42 @@ end
 -- =============================================
 TX_ADMINS = {}
 TX_PLAYERLIST = {}
+local cachedToken = GetConvar("txAdmin-luaComToken", "invalid")
+if cachedToken ~= "invalid" and cachedToken ~= "removed" then
+    TX_LUACOMTOKEN = cachedToken
+end
 TX_LUACOMHOST = GetConvar("txAdmin-luaComHost", "invalid")
-TX_LUACOMTOKEN = GetConvar("txAdmin-luaComToken", "invalid")
-TX_VERSION = GetResourceMetadata('monitor', 'version') -- for now, only used in the start print
+TX_VERSION = GetResourceMetadata(currentResName, 'version') or 'unknown'
 TX_IS_SERVER_SHUTTING_DOWN = false
 
 -- Checking convars
-if TX_LUACOMHOST == "invalid" or TX_LUACOMTOKEN == "invalid" then
+if TX_LUACOMHOST == "invalid" or not TX_LUACOMTOKEN or TX_LUACOMTOKEN == "invalid" then
     txPrint('^1API Host or Pipe Token ConVars not found. Do not start this resource if not using txAdmin.')
     return
 end
-if TX_LUACOMTOKEN == "removed" then
-    txPrint('^1Please do not restart the monitor resource.')
-    return
-end
 
--- Erasing the token convar for security reasons, and then restoring it if debug mode.
--- The convar needs to be reset on first tick to prevent other resources from reading it.
--- We actually need to wait two frames: one for convar replication, one for debugPrint.
-SetConvar("txAdmin-luaComToken", "removed")
-CreateThread(function()
-    Wait(0)
-    if not TX_DEBUG_MODE then return end
-    debugPrint("Restoring txAdmin-luaComToken for next monitor restart")
-    SetConvar("txAdmin-luaComToken", TX_LUACOMTOKEN)
-end)
+-- Erasing the token convar for security reasons if not configured to persist
+if not TX_DEBUG_MODE and not GetConvarBool('txAdmin-keepTokenConvar') then
+    SetConvar("txAdmin-luaComToken", "removed")
+end
 
 
 -- =============================================
 -- MARK: Heartbeat functions
 -- =============================================
 local httpHbUrl = "http://" .. TX_LUACOMHOST .. "/intercom/monitor"
-local httpHbPayload = json.encode({ txAdminToken = TX_LUACOMTOKEN })
+local lastReceivedEventId = 0
+local serverId = GetConvar("txAdmin-serverId", "primary")
+local isChildServer = GetConvarBool("txAdmin-isChildServer", true)
 local hbReturnData = '{"error": "no data cached in sv_main.lua"}'
+
 local function HTTPHeartBeat()
+    local payload = json.encode({
+        txAdminToken = TX_LUACOMTOKEN,
+        lastEventId = lastReceivedEventId,
+        serverId = serverId,
+        isChildServer = isChildServer
+    })
     PerformHttpRequest(httpHbUrl, function(httpCode, data, resultHeaders)
         local resp = tostring(data)
         if httpCode ~= 200 then
@@ -66,8 +68,22 @@ local function HTTPHeartBeat()
             logError(hbReturnData)
         else
             hbReturnData = resp
+            local ok, respObj = pcall(json.decode, resp)
+            if ok and type(respObj) == 'table' and type(respObj.events) == 'table' then
+                for _, ev in ipairs(respObj.events) do
+                    if ev.id and ev.id > lastReceivedEventId then
+                        lastReceivedEventId = ev.id
+                        if ev.name and TX_EVENT_HANDLERS[ev.name] ~= nil then
+                            TriggerEvent('txAdmin:events:' .. ev.name, ev.data)
+                            if TX_EVENT_HANDLERS[ev.name] ~= false then
+                                TX_EVENT_HANDLERS[ev.name](ev.data)
+                            end
+                        end
+                    end
+                end
+            end
         end
-    end, 'POST', httpHbPayload, { ['Content-Type'] = 'application/json' })
+    end, 'POST', payload, { ['Content-Type'] = 'application/json' })
 end
 
 local fd3HbPayload = json.encode({ type = 'txAdminHeartBeat' })

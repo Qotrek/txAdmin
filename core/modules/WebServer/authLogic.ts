@@ -1,6 +1,6 @@
 const modulename = 'WebServer:AuthLogic';
 import { z } from "zod";
-import { txEnv } from '@core/globalData';
+import { txEnv, txHostConfig } from '@core/globalData';
 import consoleFactory from '@lib/console';
 import type { SessToolsType } from "./middlewares/sessionMws";
 import { ReactAuthDataType } from "@shared/authApiTypes";
@@ -218,10 +218,12 @@ export const nuiAuthLogic = (
 ): AuthLogicReturnType => {
     try {
         // Check sus IPs
+        const hasValidToken = reqHeader['x-txadmin-token'] === txCore.webServer.luaComToken;
         if (
             !isLocalRequest
             && !txEnv.isZapHosting
             && !txConfig.webServer.disableNuiSourceCheck
+            && !(txHostConfig.luaComToken && hasValidToken)
         ) {
             console.verbose.warn(`NUI Auth Failed: reqIp "${reqIp}" not a local or allowed address.`);
             return failResp('Invalid Request: source');

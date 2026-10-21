@@ -44,7 +44,8 @@ IS_REDM = GAME_NAME == 'redm'
 
 -- Setting global enable/disable variable for all sv_*.lua files
 -- NOTE: not available on client
-TX_SERVER_MODE = GetConvarBool('txAdminServerMode')
+local hasLuaCom = GetConvar('txAdmin-luaComHost', 'invalid') ~= 'invalid'
+TX_SERVER_MODE = GetConvarBool('txAdminServerMode') or hasLuaCom
 
 -- Setting global enable/disable variable for all menu-related files
 TX_MENU_ENABLED = GetConvarBool('txAdmin-menuEnabled')
