@@ -49,18 +49,10 @@ end
 -- MARK: Heartbeat functions
 -- =============================================
 local httpHbUrl = "http://" .. TX_LUACOMHOST .. "/intercom/monitor"
-local lastReceivedEventId = 0
-local serverId = GetConvar("txAdmin-serverId", "primary")
-local isChildServer = GetConvarBool("txAdmin-isChildServer", true)
+local httpHbPayload = json.encode({ txAdminToken = TX_LUACOMTOKEN })
 local hbReturnData = '{"error": "no data cached in sv_main.lua"}'
 
 local function HTTPHeartBeat()
-    local payload = json.encode({
-        txAdminToken = TX_LUACOMTOKEN,
-        lastEventId = lastReceivedEventId,
-        serverId = serverId,
-        isChildServer = isChildServer
-    })
     PerformHttpRequest(httpHbUrl, function(httpCode, data, resultHeaders)
         local resp = tostring(data)
         if httpCode ~= 200 then
@@ -68,22 +60,8 @@ local function HTTPHeartBeat()
             logError(hbReturnData)
         else
             hbReturnData = resp
-            local ok, respObj = pcall(json.decode, resp)
-            if ok and type(respObj) == 'table' and type(respObj.events) == 'table' then
-                for _, ev in ipairs(respObj.events) do
-                    if ev.id and ev.id > lastReceivedEventId then
-                        lastReceivedEventId = ev.id
-                        if ev.name and TX_EVENT_HANDLERS[ev.name] ~= nil then
-                            TriggerEvent('txAdmin:events:' .. ev.name, ev.data)
-                            if TX_EVENT_HANDLERS[ev.name] ~= false then
-                                TX_EVENT_HANDLERS[ev.name](ev.data)
-                            end
-                        end
-                    end
-                end
-            end
         end
-    end, 'POST', payload, { ['Content-Type'] = 'application/json' })
+    end, 'POST', httpHbPayload, { ['Content-Type'] = 'application/json' })
 end
 
 local fd3HbPayload = json.encode({ type = 'txAdminHeartBeat' })
