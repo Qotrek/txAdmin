@@ -52,6 +52,20 @@ const ctxVarsMw = (ctx: CtxWithSession, next: Next) => {
                 txVars.realIP = srcIP;
             }
         }
+    } else if (txVars.isLocalRequest) {
+        // Reverse proxy support (Cloudflare, Nginx, etc.)
+        const proxyIP = (ctx.headers['cf-connecting-ip'] as string)
+            || (ctx.headers['x-real-ip'] as string)
+            || ((ctx.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim());
+        if (typeof proxyIP === 'string' && consts.regexValidIP.test(proxyIP)) {
+            txVars.realIP = proxyIP;
+            try {
+                Object.defineProperty(ctx, 'ip', {
+                    get: () => proxyIP,
+                    configurable: true,
+                });
+            } catch (e) {}
+        }
     }
 
     //Injecting vars and continuing
