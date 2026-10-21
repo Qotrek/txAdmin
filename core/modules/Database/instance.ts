@@ -104,9 +104,16 @@ export function mergeDatabases(current: DatabaseDataType, incoming: DatabaseData
         if (!existing) {
             actionsMap.set(a.id, a);
         } else {
-            if (a.revocation?.timestamp && (!existing.revocation?.timestamp || a.revocation.timestamp > existing.revocation.timestamp)) {
-                actionsMap.set(a.id, a);
-            }
+            const isIncomingRevoked = Boolean(a.revocation?.timestamp);
+            const revocation = (a.revocation?.timestamp && (!existing.revocation?.timestamp || a.revocation.timestamp > existing.revocation.timestamp))
+                ? a.revocation
+                : existing.revocation;
+            const acked = Boolean(existing.acked || a.acked);
+            actionsMap.set(a.id, {
+                ...(isIncomingRevoked ? a : existing),
+                revocation,
+                acked,
+            });
         }
     }
 
@@ -124,12 +131,14 @@ export function mergeDatabases(current: DatabaseDataType, incoming: DatabaseData
             const hwids = Array.from(new Set([...(newer.hwids || []), ...(older.hwids || [])]));
             const playTime = Math.max(newer.playTime || 0, older.playTime || 0);
             const notes = (p.notes?.tsLastEdit ?? 0) >= (existing.notes?.tsLastEdit ?? 0) ? p.notes : existing.notes;
+            const tsWhitelisted = newer.tsWhitelisted || older.tsWhitelisted;
             playersMap.set(p.license, {
                 ...newer,
                 ids,
                 hwids,
                 playTime,
                 notes,
+                tsWhitelisted,
             });
         }
     }
@@ -266,14 +275,19 @@ export class DbInstance {
             // Instant file watcher for cross-server syncing
             let watchDebounce: NodeJS.Timeout | null = null;
             try {
-                fs.watch(this.dbPath, () => {
+                const targetFilename = path.basename(this.dbPath);
+                const watcher = fs.watch(path.dirname(this.dbPath), (eventType, filename) => {
+                    if (filename && filename !== targetFilename) return;
                     if (watchDebounce) clearTimeout(watchDebounce);
                     watchDebounce = setTimeout(() => {
                         this.reloadAndMergeFromDisk().catch(() => {});
                     }, 800);
                 });
+                watcher.on('error', (err) => {
+                    console.verbose.warn(`playersDB watcher error: ${err.message}`);
+                });
             } catch (watchErr) {
-                console.verbose.warn(`Could not set up fs.watch on playersDB file: ${(watchErr as Error).message}`);
+                console.verbose.warn(`Could not set up fs.watch on playersDB directory: ${(watchErr as Error).message}`);
             }
         } catch (error) {
             fatalError.Database(1, 'Failed to setup database object.', error);

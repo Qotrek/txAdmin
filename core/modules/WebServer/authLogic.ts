@@ -202,7 +202,7 @@ export const normalAuthLogic = (
             return successResp(vaultAdmin, sessAuth.csrfToken);
         } else if (sessAuth.type === 'cfxre') {
             if (
-                typeof vaultAdmin.providers.citizenfx !== 'object'
+                !vaultAdmin.providers?.citizenfx || typeof vaultAdmin.providers.citizenfx !== 'object'
                 || vaultAdmin.providers.citizenfx.identifier !== sessAuth.identifier
             ) {
                 return failResp(`Cfxre identifier doesn't match for '${sessAuth.username}'.`);

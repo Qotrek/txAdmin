@@ -404,16 +404,18 @@ local function handleConnections(name, setKickReason, d)
 
         --Preparing vars and making sure we do have indentifiers
         local url = "http://"..TX_LUACOMHOST.."/player/checkJoin"
-        local exData = {
-            txAdminToken = TX_LUACOMTOKEN,
-            playerIds = GetPlayerIdentifiers(player),
-            playerHwids = GetPlayerTokens(player),
-            playerName = name
-        }
-        if #exData.playerIds <= 1 then
+        local playerIds = GetPlayerIdentifiers(player)
+        if not playerIds or #playerIds == 0 then
             d.done("\n[txAdmin] This server has bans or whitelisting enabled, which requires every player to have at least one identifier, but you have none.\nIf you own this server, make sure sv_lan is disabled in your server.cfg.")
             return
         end
+
+        local exData = {
+            txAdminToken = TX_LUACOMTOKEN,
+            playerIds = playerIds,
+            playerHwids = GetPlayerTokens(player),
+            playerName = name
+        }
 
         --Attempt to validate the user
         d.update("\n[txAdmin] Checking banlist/whitelist... (0/5)")
@@ -426,17 +428,19 @@ local function handleConnections(name, setKickReason, d)
                 d.update("\n[txAdmin] Checking banlist/whitelist... ("..attempts.."/5)")
                 PerformHttpRequest(url, function(httpCode, rawData, resultHeaders)
                     if isDone then return end
-                    -- rawData = nil
-                    -- httpCode = 408
 
                     if not rawData or httpCode ~= 200 then
                         logError("Checking banlist/whitelist failed with code "..httpCode.." and message: "..tostring(rawData))
                     else
                         local respStr = tostring(rawData)
-                        local respObj = json.decode(respStr)
-                        if not respObj or type(respObj.allow) ~= "boolean" then
-                            logError("Checking banlist/whitelist failed with invalid response: "..respStr)
-                        else
+                        local ok, respObj = pcall(json.decode, respStr)
+                        if not ok or not respObj then
+                            logError("Checking banlist/whitelist failed to parse response: " .. respStr)
+                        elseif respObj.error then
+                            logError("Checking banlist/whitelist returned error: " .. tostring(respObj.error))
+                            d.done("\n[txAdmin] " .. tostring(respObj.error))
+                            isDone = true
+                        elseif type(respObj.allow) == "boolean" then
                             if respObj.allow == true then
                                 d.done()
                                 isDone = true
@@ -445,10 +449,18 @@ local function handleConnections(name, setKickReason, d)
                                 d.done("\n"..reason)
                                 isDone = true
                             end
+                        else
+                            logError("Checking banlist/whitelist failed with invalid response: "..respStr)
                         end
                     end
                 end, 'POST', json.encode(exData), {['Content-Type']='application/json'})
-                Wait(30000) --30s
+
+                -- Sleep up to 30s but exit early once done
+                local waitCount = 0
+                while not isDone and waitCount < 300 do
+                    waitCount = waitCount + 1
+                    Wait(100)
+                end
             end
 
             --Block client if failed

@@ -209,7 +209,13 @@ export default class FxPlayerlist {
         if (payload.event === 'playerJoining') {
             try {
                 if (typeof payload.id !== 'number') throw new Error(`invalid player id`);
-                if (this.#playerlist[payload.id] !== undefined) throw new Error(`duplicated player id`);
+                if (this.#playerlist[payload.id] !== undefined) {
+                    if (this.#playerlist[payload.id]!.isConnected) {
+                        throw new Error(`duplicated player id`);
+                    } else {
+                        delete this.#playerlist[payload.id];
+                    }
+                }
                 const svPlayer = new ServerPlayer(payload.id, payload.player, this);
                 this.#playerlist[payload.id] = svPlayer;
                 this.joinLeaveLog.push([currTs, true]);

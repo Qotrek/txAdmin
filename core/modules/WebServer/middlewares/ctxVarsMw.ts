@@ -53,18 +53,16 @@ const ctxVarsMw = (ctx: CtxWithSession, next: Next) => {
                 txVars.realIP = srcIP;
             }
         }
-    } else if (txVars.isLocalRequest) {
+    } else if (txVars.isLocalRequest || typeof ctx.headers['cf-connecting-ip'] === 'string') {
         // Reverse proxy support (Cloudflare, Nginx, etc.)
-        const proxyIP = (ctx.headers['cf-connecting-ip'] as string)
+        const rawProxy = (ctx.headers['cf-connecting-ip'] as string)
             || (ctx.headers['x-real-ip'] as string)
-            || ((ctx.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim());
-        if (typeof proxyIP === 'string' && net.isIP(proxyIP) !== 0) {
+            || ((ctx.headers['x-forwarded-for'] as string)?.split(',')[0]);
+        const proxyIP = typeof rawProxy === 'string' ? rawProxy.trim() : undefined;
+        if (proxyIP && net.isIP(proxyIP) !== 0) {
             txVars.realIP = proxyIP;
             try {
-                Object.defineProperty(ctx, 'ip', {
-                    get: () => proxyIP,
-                    configurable: true,
-                });
+                ctx.ip = proxyIP;
             } catch (e) {}
         }
     }

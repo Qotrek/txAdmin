@@ -35,6 +35,7 @@ export default async function Intercom(ctx: InitializedCtx) {
             return ctx.utils.error(400, 'Invalid Request');
         }
         txCore.fxResources.tmpUpdateResourceList(postData.resources);
+        return ctx.send({ txAdminVersion: txEnv.txaVersion, success: true });
     } else {
         return ctx.send({
             type: 'danger',

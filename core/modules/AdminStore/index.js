@@ -144,11 +144,14 @@ export default class AdminStore {
         // Instant file watcher for cross-server syncing
         let watchDebounce = null;
         try {
-            fs.watch(this.adminsFile, () => {
+            const watcher = fs.watch(this.adminsFile, () => {
                 if (watchDebounce) clearTimeout(watchDebounce);
                 watchDebounce = setTimeout(() => {
                     this.checkAdminsFile().catch(() => {});
                 }, 500);
+            });
+            watcher.on('error', (err) => {
+                console.verbose.warn(`Admins file watcher error: ${err.message}`);
             });
         } catch (watchErr) {
             console.verbose.warn(`Could not set up fs.watch on admins file: ${watchErr.message}`);
@@ -261,7 +264,7 @@ export default class AdminStore {
         if (!id.length) return false;
         let admin = this.admins.find((user) => {
             return Object.keys(user.providers).find((provider) => {
-                return (id === user.providers[provider].id.toLowerCase());
+                return Boolean(user.providers[provider]?.id && (id === String(user.providers[provider].id).toLowerCase()));
             });
         });
         return (admin) ? cloneDeep(admin) : false;
@@ -310,7 +313,7 @@ export default class AdminStore {
         const admin = this.admins.find((user) =>
             identifiers.find((identifier) =>
                 Object.keys(user.providers).find((provider) =>
-                    (identifier === user.providers[provider].identifier.toLowerCase()))));
+                    Boolean(user.providers[provider]?.identifier && (identifier === user.providers[provider].identifier.toLowerCase())))));
         return (admin) ? cloneDeep(admin) : false;
     }
 
@@ -329,7 +332,9 @@ export default class AdminStore {
     async writeAdminsFile() {
         const jsonData = JSON.stringify(this.admins, null, 2);
         this.adminsFileHash = createHash('sha1').update(jsonData).digest('hex');
-        await fsp.writeFile(this.adminsFile, jsonData, 'utf8');
+        const tmpFile = `${this.adminsFile}.tmp.${process.pid}`;
+        await fsp.writeFile(tmpFile, jsonData, 'utf8');
+        await fsp.rename(tmpFile, this.adminsFile);
         return true;
     }
 

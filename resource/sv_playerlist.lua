@@ -39,6 +39,10 @@ local vTypeMap = {
     ["submarine"] = 6,
     ["trailer"] = 7,
     ["train"] = 8,
+    ["quadbike"] = 2,
+    ["amphibious_automobile"] = 1,
+    ["amphibious_quadbike"] = 2,
+    ["bicycle"] = 2,
 }
 
 
@@ -222,7 +226,7 @@ RegisterNetEvent('txsv:req:plist:getDetailed', function(getPlayerNames)
         players[#players + 1] = {
             tonumber(playerID),
             playerData.health,
-            playerData.vType,
+            playerData.vType or -1,
             playerData.xCoord,
             playerData.yCoord,
         }

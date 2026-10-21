@@ -20,7 +20,9 @@ local attemptCooldown = 15000
 local function handleAuthFail(src, reason)
     local srcString = tostring(src)
     TX_ADMINS[srcString] = nil
-    failedAuths[srcString] = GetGameTimer()
+    if reason ~= "too many auth attempts" then
+        failedAuths[srcString] = GetGameTimer()
+    end
     reason = reason or "unknown"
     debugPrint("Auth rejected #"..srcString.." ("..reason..")")
     TriggerClientEvent('txcl:setAdmin', src, false, false, reason)
@@ -41,12 +43,17 @@ RegisterNetEvent('txsv:checkIfAdmin', function()
         return handleAuthFail(source, "too many auth attempts")
     end
 
+    local playerIdentifiers = GetPlayerIdentifiers(src)
+    if not playerIdentifiers or #playerIdentifiers == 0 then
+        return handleAuthFail(source, "could not retrieve identifiers")
+    end
+
     -- Prepping http request
     local url = "http://"..TX_LUACOMHOST.."/auth/self"
     local headers = {
         ['Content-Type'] = 'application/json',
         ['X-TxAdmin-Token'] = TX_LUACOMTOKEN,
-        ['X-TxAdmin-Identifiers'] = table.concat(GetPlayerIdentifiers(src), ',')
+        ['X-TxAdmin-Identifiers'] = table.concat(playerIdentifiers, ',')
     }
 
     -- Making http request

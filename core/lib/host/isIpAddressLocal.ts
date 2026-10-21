@@ -12,10 +12,12 @@ const extendedAllowedLanIps: string[] = [];
  * This is used to secure the webpipe auth and the rate limiter.
  */
 export const isIpAddressLocal = (ipAddress: string): boolean => {
+    const cleanIp = ipAddress.startsWith('::ffff:') ? ipAddress.substring(7) : ipAddress;
     return (
-        /^(127\.|192\.168\.|10\.|::1|fd00::)/.test(ipAddress)
+        /^(127\.|192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|::1|fd00::)/.test(cleanIp)
         || extendedAllowedLanIps.includes(ipAddress)
-    )
+        || extendedAllowedLanIps.includes(cleanIp)
+    );
 }
 
 
