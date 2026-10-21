@@ -61,6 +61,9 @@ export default async function GetSettingsConfigs(ctx: AuthedCtx) {
         if(outData.storedConfigs.discordBot?.token) {
             toRedact.discordBot.token = '[redacted by txAdmin]';
         }
+        if(outData.storedConfigs.discordBot?.oauthClientSecret) {
+            toRedact.discordBot.oauthClientSecret = '[redacted by txAdmin]';
+        }
     }
 
     return sendTypedResp(outData);

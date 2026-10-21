@@ -1,6 +1,7 @@
 const modulename = 'WebServer:SetupVarsMw';
 import consoleFactory from '@lib/console';
 import consts from '@shared/consts';
+import net from 'node:net';
 const console = consoleFactory(modulename);
 import { Next } from "koa";
 import { CtxWithSession } from '../ctxTypes';
@@ -57,7 +58,7 @@ const ctxVarsMw = (ctx: CtxWithSession, next: Next) => {
         const proxyIP = (ctx.headers['cf-connecting-ip'] as string)
             || (ctx.headers['x-real-ip'] as string)
             || ((ctx.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim());
-        if (typeof proxyIP === 'string' && consts.regexValidIP.test(proxyIP)) {
+        if (typeof proxyIP === 'string' && net.isIP(proxyIP) !== 0) {
             txVars.realIP = proxyIP;
             try {
                 Object.defineProperty(ctx, 'ip', {

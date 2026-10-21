@@ -5,6 +5,7 @@ import { cloneDeep } from 'lodash-es';
 import { nanoid } from 'nanoid';
 import { txHostConfig } from '@core/globalData';
 import CfxProvider from './providers/CitizenFX.js';
+import DiscordProvider from './providers/Discord.js';
 import { createHash } from 'node:crypto';
 import consoleFactory from '@lib/console.js';
 import fatalError from '@lib/fatalError.js';
@@ -89,7 +90,7 @@ export default class AdminStore {
         //FIXME: pode virar um top-level singleton , nĂŁo precisa estar na classe
         try {
             this.providers = {
-                discord: false,
+                discord: new DiscordProvider(),
                 citizenfx: new CfxProvider(),
             };
         } catch (error) {

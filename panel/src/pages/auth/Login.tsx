@@ -18,15 +18,9 @@ function HeaderNoServer() {
     return (
         <div className="text-center">
             <div className="text-xl xs:text-2xl text-primary/85 font-semibold line-clamp-1">
-                {/* Server Unconfigured */}
-                {/* Unconfigured Server */}
-                {/* Server Not Configured */}
-                {/* Server Not Yet Configured */}
                 Welcome to txAdmin!
             </div>
             <div className="text-sm xs:text-base font-normal tracking-wide text-muted-foreground">
-                {/* please login to set it up */}
-                {/* login to configure it */}
                 please login to continue
             </div>
         </div>
@@ -136,6 +130,25 @@ export default function Login() {
         }
     }
 
+    const handleDiscordRedirect = async () => {
+        try {
+            setIsFetching(true);
+            const data = await fetchWithTimeout<ApiOauthRedirectResp>(
+                `/auth/discord/redirect?origin=${encodeURIComponent(window.location.origin)}`
+            );
+            if ('error' in data) {
+                onErrorResponse(data.error);
+                setIsFetching(false);
+            } else {
+                console.log('Redirecting to Discord', data.authUrl);
+                window.location.href = data.authUrl;
+            }
+        } catch (error) {
+            onError(error);
+            setIsFetching(false);
+        }
+    }
+
     //Prefill username/password if dev pass enabled
     useEffect(() => {
         try {
@@ -235,6 +248,18 @@ export default function Login() {
                     ) : (
                         <LogInIcon className="inline mr-2 h-4 w-4" />
                     )} Login with Cfx.re
+                </Button>
+                <Button
+                    className="discordbtn"
+                    variant='outline'
+                    disabled={isFetching}
+                    onClick={handleDiscordRedirect}
+                >
+                    {isFetching ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                        <LogInIcon className="inline mr-2 h-4 w-4" />
+                    )} Login with Discord
                 </Button>
             </CardContent>
         </form>

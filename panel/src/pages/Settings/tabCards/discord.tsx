@@ -29,6 +29,8 @@ export const pageConfigs = {
     warningsChannel: getPageConfig('discordBot', 'warningsChannel'),
     embedJson: getPageConfig('discordBot', 'embedJson'),
     embedConfigJson: getPageConfig('discordBot', 'embedConfigJson'),
+    oauthClientId: getPageConfig('discordBot', 'oauthClientId'),
+    oauthClientSecret: getPageConfig('discordBot', 'oauthClientSecret'),
 } as const;
 
 export default function ConfigCardDiscord({ cardCtx, pageCtx }: SettingsCardProps) {
@@ -50,6 +52,8 @@ export default function ConfigCardDiscord({ cardCtx, pageCtx }: SettingsCardProp
     const botTokenRef = useRef<HTMLInputElement | null>(null);
     const discordGuildRef = useRef<HTMLInputElement | null>(null);
     const warningsChannelRef = useRef<HTMLInputElement | null>(null);
+    const oauthClientIdRef = useRef<HTMLInputElement | null>(null);
+    const oauthClientSecretRef = useRef<HTMLInputElement | null>(null);
 
     //Marshalling Utils
     const emptyToNull = (str?: string) => {
@@ -64,6 +68,8 @@ export default function ConfigCardDiscord({ cardCtx, pageCtx }: SettingsCardProp
             botToken: emptyToNull(botTokenRef.current?.value),
             discordGuild: emptyToNull(discordGuildRef.current?.value),
             warningsChannel: emptyToNull(warningsChannelRef.current?.value),
+            oauthClientId: emptyToNull(oauthClientIdRef.current?.value),
+            oauthClientSecret: emptyToNull(oauthClientSecretRef.current?.value),
         };
 
         const res = getConfigDiff(cfg, states, overwrites, false);
@@ -118,10 +124,8 @@ export default function ConfigCardDiscord({ cardCtx, pageCtx }: SettingsCardProp
                     onInput={updatePageState}
                     disabled={pageCtx.isReadOnly}
                     placeholder="xxxxxxxxxxxxxxxxxxxxxxxx.xxxxxx.xxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                    maxLength={96}
+                    type="password"
                     autoComplete="off"
-                    className="blur-input"
-                    required
                 />
                 <SettingItemDesc>
                     To get a token and the bot to join your server, follow these two guides: <br />
@@ -159,30 +163,39 @@ export default function ConfigCardDiscord({ cardCtx, pageCtx }: SettingsCardProp
                     To get the channel ID, go to Discord's settings and <TxAnchor href="https://support.discordapp.com/hc/article_attachments/115002742731/mceclip0.png">enable developer mode</TxAnchor>, then right-click on the channel name and select "Copy ID".
                 </SettingItemDesc>
             </SettingItem>
-            {/* <SettingItem label="Status Embed">
-                <div className="flex flex-wrap gap-6">
-                    <Button
-                        size={'sm'}
-                        variant="secondary"
-                        disabled={pageCtx.isReadOnly}
-                        // FIXME: implement
-                    >
-                        <PencilIcon className='size-4 mr-1.5 inline-block' /> Change Embed JSON
-                    </Button>
-                    <Button
-                        size={'sm'}
-                        variant="secondary"
-                        disabled={pageCtx.isReadOnly}
-                        // FIXME: implement
-                    >
-                        <PencilIcon className='size-4 mr-1.5 inline-block' /> Change Config JSON
-                    </Button>
-                </div>
+
+            {/* Discord OAuth2 Admin Login */}
+            <SettingItem label="OAuth2 Client ID" htmlFor={cfg.oauthClientId.eid} showOptional>
+                <Input
+                    id={cfg.oauthClientId.eid}
+                    ref={oauthClientIdRef}
+                    defaultValue={cfg.oauthClientId.initialValue ?? ''}
+                    onInput={updatePageState}
+                    disabled={pageCtx.isReadOnly}
+                    placeholder="123456789012345678"
+                    autoComplete="off"
+                />
                 <SettingItemDesc>
-                    The server status embed is customizable by editing the two JSONs above. <br />
-                    <strong>Note:</strong> Use the command <InlineCode>/status add</InlineCode> on a channel that the bot has the "Send Message" permission to setup the embed.
+                    Discord Application ID (Client ID) to enable "Login with Discord" for admins.
                 </SettingItemDesc>
-            </SettingItem> */}
+            </SettingItem>
+            <SettingItem label="OAuth2 Client Secret" htmlFor={cfg.oauthClientSecret.eid} showOptional>
+                <Input
+                    id={cfg.oauthClientSecret.eid}
+                    ref={oauthClientSecretRef}
+                    defaultValue={cfg.oauthClientSecret.initialValue ?? ''}
+                    onInput={updatePageState}
+                    disabled={pageCtx.isReadOnly}
+                    type="password"
+                    placeholder="Client Secret"
+                    autoComplete="off"
+                />
+                <SettingItemDesc>
+                    Client Secret from Discord Developer Portal &gt; OAuth2. <br />
+                    <strong>Redirect URI in Discord Portal:</strong> <InlineCode>{window.location.origin}/login/discord/callback</InlineCode>
+                </SettingItemDesc>
+            </SettingItem>
+
             <SettingItem label="Status Embed JSON" htmlFor={cfg.embedJson.eid} required={states.botEnabled}>
                 <div className="flex flex-col gap-2">
                     <Textarea

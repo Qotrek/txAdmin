@@ -132,9 +132,19 @@ const validCfxreSessAuthSchema = z.object({
 });
 export type CfxreSessAuthType = z.infer<typeof validCfxreSessAuthSchema>;
 
+const validDiscordSessAuthSchema = z.object({
+    type: z.literal('discord'),
+    username: z.string(),
+    csrfToken: z.string(),
+    expiresAt: z.number(),
+    identifier: z.string(),
+});
+export type DiscordSessAuthType = z.infer<typeof validDiscordSessAuthSchema>;
+
 const validSessAuthSchema = z.discriminatedUnion('type', [
     validPassSessAuthSchema,
-    validCfxreSessAuthSchema
+    validCfxreSessAuthSchema,
+    validDiscordSessAuthSchema,
 ]);
 
 
@@ -196,6 +206,18 @@ export const normalAuthLogic = (
                 || vaultAdmin.providers.citizenfx.identifier !== sessAuth.identifier
             ) {
                 return failResp(`Cfxre identifier doesn't match for '${sessAuth.username}'.`);
+            }
+            return successResp(vaultAdmin, sessAuth.csrfToken);
+        } else if (sessAuth.type === 'discord') {
+            const discordProvider = vaultAdmin.providers?.discord;
+            if (!discordProvider || typeof discordProvider !== 'object') {
+                return failResp(`Discord provider not found for '${sessAuth.username}'.`);
+            }
+            const cleanId = sessAuth.identifier.replace(/^discord:/, '');
+            const idMatches = discordProvider.id === cleanId;
+            const identifierMatches = discordProvider.identifier === sessAuth.identifier;
+            if (!idMatches && !identifierMatches) {
+                return failResp(`Discord identifier doesn't match for '${sessAuth.username}'.`);
             }
             return successResp(vaultAdmin, sessAuth.csrfToken);
         } else {

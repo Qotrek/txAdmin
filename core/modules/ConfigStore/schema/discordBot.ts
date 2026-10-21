@@ -58,6 +58,20 @@ const embedConfigJson = typeDefinedConfig({
     fixer: SYM_FIXER_DEFAULT,
 });
 
+const oauthClientId = typeNullableConfig({
+    name: 'OAuth2 Client ID',
+    default: null,
+    validator: z.string().trim().nullable(),
+    fixer: SYM_FIXER_DEFAULT,
+});
+
+const oauthClientSecret = typeNullableConfig({
+    name: 'OAuth2 Client Secret',
+    default: null,
+    validator: z.string().trim().nullable(),
+    fixer: SYM_FIXER_DEFAULT,
+});
+
 
 export default {
     enabled,
@@ -66,4 +80,6 @@ export default {
     warningsChannel,
     embedJson,
     embedConfigJson,
+    oauthClientId,
+    oauthClientSecret,
 } as const;

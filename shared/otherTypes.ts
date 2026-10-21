@@ -49,6 +49,7 @@ export type InjectedTxConsts = {
     providerLogo: string | undefined;
     providerName: string | undefined;
     hostConfigSource: string;
+    isDiscordAuthEnabled?: boolean;
     server: {
         name: string;
         game: string | undefined;

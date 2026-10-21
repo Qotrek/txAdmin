@@ -43,34 +43,7 @@ const devModulesScript = `<script type="module">
 //Custom themes placeholder
 export const tmpDefaultTheme = 'dark';
 export const tmpDefaultThemes = ['dark', 'light'];
-export const tmpCustomThemes: ThemeType[] = [
-    // {
-    //     name: 'deep-purple',
-    //     isDark: true,
-    //     style: {
-    //         "background": "274 93% 39%",
-    //         "foreground": "269 9% 100%",
-    //         "card": "274 79% 53%",
-    //         "card-foreground": "270 48% 99%",
-    //         "popover": "240 10% 3.9%",
-    //         "popover-foreground": "270 48% 99%",
-    //         "primary": "270 48% 99%",
-    //         "primary-foreground": "240 5.9% 10%",
-    //         "secondary": "240 3.7% 15.9%",
-    //         "secondary-foreground": "270 48% 99%",
-    //         "muted": "240 3.7% 15.9%",
-    //         "muted-foreground": "240 5% 64.9%",
-    //         "accent": "240 3.7% 15.9%",
-    //         "accent-foreground": "270 48% 99%",
-    //         "destructive": "0 62.8% 30.6%",
-    //         "destructive-foreground": "270 48% 99%",
-    //         "border": "273 79%, 53%",
-    //         "input": "240 3.7% 15.9%",
-    //         "ring": "240 4.9% 83.9%",
-    //     }
-    // }
-];
-
+export const tmpCustomThemes: ThemeType[] = [];
 
 
 /**
@@ -131,6 +104,7 @@ export default async function getReactIndex(ctx: CtxWithVars | AuthedCtx) {
         providerLogo: txHostConfig.providerLogo,
         providerName: txHostConfig.providerName,
         hostConfigSource: txHostConfig.sourceName,
+        isDiscordAuthEnabled: Boolean(txConfig.discordBot?.oauthClientId && txConfig.discordBot?.oauthClientSecret),
 
         //Login page info
         server: {

@@ -16,3 +16,23 @@
     border: solid 2px rgb(89, 89, 89);
     box-shadow: 0 0 5px 0 rgba(89, 89, 89, 0.75);
 }
+
+.discordbtn {
+    border: solid 2px #5865F2;
+    background: #5865f21f;
+    box-shadow: 0 0 5px 0 rgba(88, 101, 242, 0.75);
+}
+.dark .discordbtn {
+    background: #5865f22e;
+}
+.discordbtn:hover {
+    background-color: #5865F2;
+    color: white;
+}
+.discordbtn:disabled {
+    color: lightgray;
+    cursor: wait;
+    background-color: rgb(40, 40, 40);
+    border: solid 2px rgb(89, 89, 89);
+    box-shadow: 0 0 5px 0 rgba(89, 89, 89, 0.75);
+}
