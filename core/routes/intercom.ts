@@ -3,7 +3,7 @@ import { cloneDeep }  from 'lodash-es';
 import { txEnv } from '@core/globalData';
 import consoleFactory from '@lib/console';
 import { InitializedCtx } from '@modules/WebServer/ctxTypes';
-import FxRunner from '@modules/FXRunner';
+import FxRunner from '@modules/FxRunner';
 const console = consoleFactory(modulename);
 
 
