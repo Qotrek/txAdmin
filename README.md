@@ -16,20 +16,37 @@
     </p>
 </p>
 
-## 🚀 Fork Features: Multi-Server & Shared Data
+## 🚀 Fork Features: Multi-Server, Discord OAuth2 & Enterprise Enhancements
 
-This fork enhances **txAdmin** with seamless multi-server support, allowing multiple independent FXServer / FiveM game servers (e.g. `Main RP` and `CarDev / Testing`) to run concurrently while sharing administration, player database, bans, and whitelist without data collisions.
+This fork enhances **txAdmin** with seamless multi-server support, modern Discord OAuth2 authentication, reverse proxy real-IP resolution, and stability improvements for production FiveM / RedM clusters.
 
 ### 🌟 What's New in This Fork:
-- **Shared Player Database (`TXHOST_PLAYERS_DB_PATH`)**: Multiple txAdmin instances can now target a single shared `playersDB.json`. Any bans, warnings, whitelist approvals, or player notes executed on one server immediately propagate to all other instances via live filesystem watching and non-destructive data merging (`mergeDatabases`).
-- **Shared Admin Store (`TXHOST_ADMINS_FILE_PATH`)**: Point multiple servers to a single shared `admins.json`. Modifying admin permissions or accounts in any panel updates all running instances on the fly without wiping external edits.
-- **Fixed Intercom LuaCom Token (`TXHOST_LUACOM_TOKEN`)**: Support for fixed intercom tokens across server restarts.
-- **Custom Profile Management (`TXHOST_PROFILE`)**: Run distinct server configurations, ports, and logs while pointing to unified shared databases.
-- **Static Assets Fault-Tolerance**: Prevents fatal `ENOENT` webserver crashes when static asset directories are customized.
 
-📖 **Read the full documentation:**
+1. **Multi-Server Shared Data Architecture:**
+   - **Shared Player Database (`TXHOST_PLAYERS_DB_PATH`)**: Multiple txAdmin instances (e.g. `Main RP` and `CarDev / Testing`) target a unified `playersDB.json`. Bans, warnings, whitelist approvals, and player notes propagate across servers in real-time via live filesystem watchers and intelligent timestamp-based data merging (`mergeDatabases`).
+   - **Shared Admin Store (`TXHOST_ADMINS_FILE_PATH`)**: Point multiple servers to a single shared `admins.json`. Adding or updating admins on one panel syncs immediately across all instances without wiping manual or external edits.
+   - **Custom Profile Isolation (`TXHOST_PROFILE`)**: Independent configs, ports, and logs under isolated profile folders (`txData/main`, `txData/cardev`).
+   - **Persistent LuaCom Token (`TXHOST_LUACOM_TOKEN`)**: Support for fixed intercom tokens across server restarts.
+
+2. **Discord OAuth2 Admin Login:**
+   - **One-Click Staff Login**: Dedicated "Login with Discord" button on the web panel.
+   - **Automatic Account Mapping**: Matches the administrator's Discord ID stored in `admins.json` (`discord:<ID>` or provider UID).
+   - **Web UI Configuration**: Configure `OAuth2 Client ID` and `OAuth2 Client Secret` directly in `txAdmin > Settings > Discord`.
+   - **Secure & Robust**: State-based CSRF protection, session expiration, and automatic admin Discord avatar caching.
+
+3. **Reverse Proxy & Cloudflare Real-IP Fix:**
+   - Automatic client real IP resolution via `CF-Connecting-IP`, `X-Real-IP`, or `X-Forwarded-For` with full IPv4 & IPv6 support (`net.isIP`).
+   - Fixes upstream bug where failed login attempts through Nginx / Cloudflare resulted in banning `127.0.0.1`, locking all users out of the panel.
+
+4. **Reliability & Linux Fixes:**
+   - **Neutralized Prerelease Timebomb**: Removed the upstream hardcoded expiration cutoff in `core/boot/checkPreRelease.ts`.
+   - **Linux Case-Sensitivity Fixes**: Fixed import case sensitivity issues (`@modules/FxRunner`) preventing builds and runs on Linux servers.
+   - **Static Assets Fault-Tolerance**: Prevents fatal `ENOENT` webserver crashes when static asset directories are customized.
+
+📖 **Documentation:**
 - **[Multi-Server Architecture & Setup Guide](docs/multi-server.md)**
-- **[Environment Variables Configuration](docs/env-config.md)**
+- **[Discord OAuth2 Configuration Guide](docs/discord-oauth.md)**
+- **[Environment Variables Reference](docs/env-config.md)**
 
 ## Main Features
 - Recipe-based Server Deployer: create a server in under 60 seconds! ([docs/recipe.md](docs/recipe.md))
