@@ -2,6 +2,7 @@ const modulename = 'WebServer:AuthDiscordCallback';
 import consoleFactory from '@lib/console';
 import { InitializedCtx } from '@modules/WebServer/ctxTypes';
 import { AuthedAdmin, DiscordSessAuthType } from '@modules/WebServer/authLogic';
+import { getDiscordAvatarUrl } from '@modules/AdminStore/providers/Discord';
 import { z } from 'zod';
 import { ApiOauthCallbackErrorResp, ApiOauthCallbackResp } from '@shared/authApiTypes';
 import { nanoid } from 'nanoid';
@@ -75,14 +76,12 @@ export default async function AuthDiscordCallback(ctx: InitializedCtx) {
     }
 
     try {
+        // Cache avatar picture before creating AuthedAdmin so it is loaded into the instance
+        const avatarUrl = getDiscordAvatarUrl(userInfo);
+        txCore.cacheStore.set(`admin:picture:${vaultAdmin.name}`, avatarUrl);
+
         const csrfToken = nanoid();
         const authedAdmin = new AuthedAdmin(vaultAdmin, csrfToken);
-
-        // Cache avatar picture if available
-        if (userInfo.avatar) {
-            const avatarUrl = `https://cdn.discordapp.com/avatars/${userInfo.id}/${userInfo.avatar}.png`;
-            txCore.cacheStore.set(`admin:picture:${vaultAdmin.name}`, avatarUrl);
-        }
 
         ctx.sessTools.set({
             auth: {
@@ -95,6 +94,8 @@ export default async function AuthDiscordCallback(ctx: InitializedCtx) {
         });
 
         authedAdmin.logAction(`logged in from ${ctx.ip} via discord auth`);
+        txCore.metrics.txRuntime.loginOrigins.count(ctx.txVars.hostType);
+        txCore.metrics.txRuntime.loginMethods.count('discord');
         return ctx.send<ApiOauthCallbackResp>(authedAdmin.getAuthData());
     } catch (error) {
         console.error(`Failed to authenticate admin session: ${(error as Error).message}`);

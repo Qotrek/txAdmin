@@ -4,6 +4,7 @@ import { txEnv, txHostConfig } from '@core/globalData';
 import consoleFactory from '@lib/console';
 import type { SessToolsType } from "./middlewares/sessionMws";
 import { ReactAuthDataType } from "@shared/authApiTypes";
+import { getDiscordAvatarUrl } from "@modules/AdminStore/providers/Discord";
 const console = consoleFactory(modulename);
 
 
@@ -26,7 +27,22 @@ export class AuthedAdmin {
         this.csrfToken = csrfToken;
 
         const cachedPfp = txCore.cacheStore.get(`admin:picture:${vaultAdmin.name}`);
-        this.profilePicture = typeof cachedPfp === 'string' ? cachedPfp : undefined;
+        if (typeof cachedPfp === 'string') {
+            this.profilePicture = cachedPfp;
+        } else if (vaultAdmin.providers?.discord?.id || vaultAdmin.providers?.discord?.identifier) {
+            const rawDiscordId = String(vaultAdmin.providers.discord.id || vaultAdmin.providers.discord.identifier);
+            const discordId = rawDiscordId.replace(/^discord:/, '');
+            this.profilePicture = getDiscordAvatarUrl({ id: discordId });
+            if (txCore.discordBot?.isClientReady) {
+                txCore.discordBot.resolveMemberProfile(discordId).then((profile) => {
+                    if (profile?.avatar) {
+                        txCore.cacheStore.set(`admin:picture:${vaultAdmin.name}`, profile.avatar);
+                    }
+                }).catch(() => {});
+            }
+        } else {
+            this.profilePicture = undefined;
+        }
     }
 
     /**

@@ -18,6 +18,21 @@ export const getDiscordOauthState = (stateKern: string) => {
     return crypto.createHash('SHA1').update(stateSeed).digest('hex');
 };
 
+export const getDiscordAvatarUrl = (user: { id: string; avatar?: string | null; discriminator?: string | null }) => {
+    if (user.avatar) {
+        const ext = user.avatar.startsWith('a_') ? 'gif' : 'png';
+        return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${ext}?size=128`;
+    }
+    try {
+        const defaultIndex = (user.discriminator && user.discriminator !== '0')
+            ? (parseInt(user.discriminator, 10) % 5)
+            : Number((BigInt(user.id) >> 22n) % 6n);
+        return `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
+    } catch {
+        return 'https://cdn.discordapp.com/embed/avatars/0.png';
+    }
+};
+
 export default class DiscordProvider {
     /**
      * Returns the Provider Auth URL

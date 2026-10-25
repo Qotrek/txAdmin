@@ -63,7 +63,7 @@ export default async function AuthProviderCallback(ctx: InitializedCtx) {
             type: 'cfxre',
             username: vaultAdmin.name,
             csrfToken: txCore.adminStore.genCsrfToken(),
-            expiresAt: Date.now() + 86_400_000, //24h,
+            expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
             identifier: fivemIdentifier,
         } satisfies CfxreSessAuthType;
         ctx.sessTools.set({ auth: sessData });
