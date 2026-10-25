@@ -31,7 +31,7 @@ type StoredSessionType = {
  */
 export class SessionMemoryStorage {
     private readonly sessions = new LRUCacheWithDelete<string, StoredSessionType>(5000);
-    public readonly maxAgeMs = 24 * 60 * 60 * 1000;
+    public readonly maxAgeMs = 7 * 24 * 60 * 60 * 1000; // 7 days
 
     constructor(maxAgeMs?: number) {
         if (maxAgeMs) {
