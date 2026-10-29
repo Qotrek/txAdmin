@@ -133,8 +133,8 @@ export default class FxScheduler {
      * Enable scheduled button -> setNextSkip(false)
      */
     setNextSkip(enabled: boolean, author?: string) {
+        let prevMinuteFloorTs, temporary;
         if (enabled) {
-            let prevMinuteFloorTs, temporary;
             if (this.nextTempSchedule) {
                 prevMinuteFloorTs = this.nextTempSchedule.minuteFloorTs;
                 temporary = true;
@@ -168,6 +168,10 @@ export default class FxScheduler {
 
         //Refresh UI
         txCore.webServer.webSocket.pushRefresh('status');
+
+        return {
+            cancelled: Boolean(prevMinuteFloorTs),
+        };
     }
 
 
@@ -175,9 +179,13 @@ export default class FxScheduler {
      * Sets this.nextTempSchedule.
      * The value MUST be before the next setting scheduled time.
      */
-    setNextTempSchedule(timeString: string) {
+    setNextTempSchedule(timeString: string, author?: string) {
         //Process input
         if (typeof timeString !== 'string') throw new Error('expected string');
+        timeString = timeString.trim();
+        if (!timeString.includes(':') && !timeString.startsWith('+')) {
+            timeString = `+${timeString}`;
+        }
         const thisMinuteTs = new Date().setSeconds(0, 0);
         let scheduledString, scheduledMinuteFloorTs;
 
@@ -223,8 +231,22 @@ export default class FxScheduler {
         //This is needed to refresh this.calculatedNextRestartMinuteFloorTs
         this.checkSchedule();
 
+        //Dispatch txAdmin:events:restartScheduled
+        const secondsRemaining = Math.floor((scheduledMinuteFloorTs - Date.now()) / 1000);
+        txCore.fxRunner.sendEvent('restartScheduled', {
+            secondsRemaining,
+            time: scheduledString,
+            author,
+        });
+
         //Refresh UI
         txCore.webServer.webSocket.pushRefresh('status');
+
+        return {
+            string: scheduledString,
+            minuteFloorTs: scheduledMinuteFloorTs,
+            secondsRemaining,
+        };
     }
 
 

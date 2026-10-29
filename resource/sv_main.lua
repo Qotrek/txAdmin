@@ -175,6 +175,7 @@ TX_EVENT_HANDLERS = {
     playerWhitelisted = false,
     skippedNextScheduledRestart = false,
     scheduledRestartSkipped = false,
+    restartScheduled = false,
     whitelistPlayer = false,
     whitelistPreApproval = false,
     whitelistRequest = false,

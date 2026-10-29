@@ -30,6 +30,7 @@ server_scripts {
     'resource/sv_playerlist.lua',
     'resource/sv_ctx.lua',
     'resource/sv_initialData.lua',
+    'resource/sv_schedule.lua',
     'resource/menu/server/sv_webpipe.lua',
     'resource/menu/server/sv_functions.lua',
     'resource/menu/server/sv_main_page.lua',
@@ -39,6 +40,13 @@ server_scripts {
     'resource/menu/server/sv_player_modal.lua',
     'resource/menu/server/sv_spectate.lua',
     'resource/menu/server/sv_player_mode.lua'
+}
+
+server_exports {
+    'scheduleRestart',
+    'cancelRestart',
+    'getScheduledRestart',
+    'restartServer'
 }
 
 client_scripts {

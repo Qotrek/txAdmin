@@ -50,6 +50,40 @@ const handleBridgedCommands = (payload: any) => {
             console.verbose.warn(`handleBridgedCommands handler error:`);
             console.verbose.dir(error);
         }
+    } else if (payload.command === 'scheduleRestart') {
+        try {
+            if (typeof payload.time === 'string' || typeof payload.time === 'number') {
+                const timeString = typeof payload.time === 'number' ? `+${Math.floor(payload.time)}` : String(payload.time).trim();
+                const author = payload.author || payload.invokingResource || 'FXServer';
+                const reason = payload.reason ? ` (${payload.reason})` : '';
+                const res = txCore.fxScheduler.setNextTempSchedule(timeString, `FXServer:${author}`);
+                const logMsg = `Scheduling server restart at ${res.string} via ${author}${reason}`;
+                console.log(logMsg);
+                txCore.logger.admin.write(author, logMsg);
+            }
+        } catch (error) {
+            console.verbose.warn(`scheduleRestart bridged command error: ${(error as Error).message}`);
+        }
+    } else if (payload.command === 'cancelRestart') {
+        try {
+            const author = payload.author || payload.invokingResource || 'FXServer';
+            const reason = payload.reason ? ` (${payload.reason})` : '';
+            txCore.fxScheduler.setNextSkip(true, `FXServer:${author}`);
+            const logMsg = `Cancelled scheduled restart via ${author}${reason}`;
+            console.log(logMsg);
+            txCore.logger.admin.write(author, logMsg);
+        } catch (error) {
+            console.verbose.warn(`cancelRestart bridged command error: ${(error as Error).message}`);
+        }
+    } else if (payload.command === 'restartServer') {
+        try {
+            const author = payload.author || payload.invokingResource || 'FXServer';
+            const reason = payload.reason ? String(payload.reason) : 'Lua export restartServer';
+            txCore.logger.admin.write(author, `Restarting server immediately via ${author}`);
+            txCore.fxRunner.restartServer(reason, `FXServer:${author}`);
+        } catch (error) {
+            console.verbose.warn(`restartServer bridged command error: ${(error as Error).message}`);
+        }
     } else {
         console.warn(`Command bridge received invalid command:`);
         console.dir(payload);
